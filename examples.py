@@ -17,7 +17,7 @@ def genTestData(xDim, yDim, numPts):
     return points
 
 
-def initTestQuadTree(xDim, yDim, numPts, maxPtsPerQuad):
+def initTestQuadTree(xDim, yDim, maxPtsPerQuad):
     centrePt = [float(xDim/2.0), float(yDim/2.0)]
     #Init the blank tree
     quadT = quadTree2D(centrePt, float(xDim)/2.0, float(yDim)/2.0, maxPtsPerQuad, 0)
@@ -55,26 +55,48 @@ def testDistanceCalcs():
     '''
     xDim = 10.0
     yDim = 10.0
-    numPts = 10000000
+    outerDim = 10000
+    innerDim = 1000
     maxPtsPerQuad = 100
-    quadT = initTestQuadTree(xDim, yDim, numPts, maxPtsPerQuad)
+    quadT = initTestQuadTree(xDim, yDim, maxPtsPerQuad)
     #Populate
-    tstData = genTestData(xDim, yDim, numPts)
+    tstData = genTestData(xDim, yDim, innerDim)
     tstData.append([1.557, 8.556])
     tstPt = [1.556, 8.55]
+    closePt = []
+    #Quad tree populate
+    print 'Populating quadtree'
+    cnt=0
+    for i in range(0, outerDim):
+        for ii in range(0, innerDim):
+            chk = quadT.insertPt(tstData[ii])
+            if chk == True:
+                cnt+=1
+    quadT.insertPt([1.557, 8.556])
+    print 'successfully inserted', cnt
+    print 'depth', quadT.getDepth(0)
+    #Beginning Tests
     t0 = time.time()
     closestDist = 99999.0
     closestIdx = 0
-    print 'Brute Forcing'
-    for idx, pt in enumerate(tstData):
-        dist = math.sqrt(math.pow((tstPt[0]-pt[0]), 2.0)+math.pow((tstPt[1]-pt[1]), 2.0))
-        if dist < closestDist:
-            closestDist = dist
-            closestIdx = idx
+    print 'Brute Forcing: ', outerDim*innerDim
+    for i in range(0, outerDim):
+        for ii in range(0, innerDim):
+            dist = math.sqrt(math.pow((tstPt[0]-tstData[ii][0]), 2.0)+math.pow((tstPt[1]-tstData[ii][1]), 2.0))
+            if dist < closestDist:
+                closestDist = dist
+                closePt = tstData[ii]
     t1 = time.time()
     total = t1-t0
-    print 'brute force results (time, dist, idx, closept, tstpt): ', total, closestDist, tstData[idx], tstPt
+    print 'brute force results (time, dist, tstpt, closePt): ', total, closestDist, tstPt, closePt
+    #print 'brute time: ', total, ' secs'
+
     
+    t0 = time.time()
+    closePts = quadT.getPtsByDistance(tstPt, 0.01)
+    t1 = time.time()
+    total = t1-t0
+    print 'quadT (time, closestPts): ', total
     del quadT
     
     
