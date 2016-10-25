@@ -245,7 +245,88 @@ class TestQuadTree2D(unittest.TestCase):
         outPoints = []
         self.quadT.getPtsByQID([0,1,2], outPoints)
         self.assertEqual(outPoints, [[5.51, 5.51]])
-
+    
+    def test_quadIDsByVertexDist(self):
+        '''
+        Get quads by distance of their vertices from given point
+        '''
+        tstPt = []
+        chkPts1 = []
+        cnt = 0
+        for i in range(0,10):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([1.1, 1.1])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(cnt, 10)
+        self.assertEqual(self.quadT.getTotalPts(), 10)
+        self.assertEqual(self.quadT.getDepth(0), 0)
+        #Tip it over to next layer
+        chk = self.quadT.insertPt([5.51, 5.51])
+        self.assertEqual(self.quadT.getTotalPts(), 11)
+        self.assertEqual(self.quadT.getDepth(0), 1)
+        
+        chkPt = [5.1, 9.9]
+        chkDist = 2.1
+        quadIDs = []
+        self.quadT.vertexDist(chkPt, chkDist, quadIDs)
+        self.assertEqual(quadIDs, [[0,1]])
+    
+    def test_getBounds(self):
+        inShapeVerts = [[1.0, 10.0], [10.0, 12.0], [10.0, 1.5], [1.0, 0.5]]
+        bbox = self.quadT.getBounds(inShapeVerts)  
+        self.assertEqual(bbox, [[1.0, 0.5], [10.0, 12.0]]) 
+        
+    def test_minBoundingQuad(self):
+        '''
+        Get smallest quad that fiully bounds the given shape
+        '''
+        tstPt = []
+        chkPts1 = []
+        cnt = 0
+        for i in range(0,10):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([1.1, 1.1])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(cnt, 10)
+        self.assertEqual(self.quadT.getTotalPts(), 10)
+        self.assertEqual(self.quadT.getDepth(0), 0)
+        #Tip it over to next layer
+        chk = self.quadT.insertPt([5.51, 5.51])
+        self.assertEqual(self.quadT.getTotalPts(), 11)
+        #Try deeper
+        chkPts1 = []
+        for i in range(0,10):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([9.1, 9.12])
+            chkPts1.append([9.1, 9.12])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(self.quadT.getTotalPts(), 21)
+        self.assertEqual(self.quadT.getDepth(0), 2)
+        #Now check the bounding quad
+        inShapeVerts = [[7.6, 7.6], [7.6, 9.2], [9.2, 9.2], [9.2, 7.6]]
+        quadID = self.quadT.minBoundingQuad(inShapeVerts, [0])
+        self.assertEqual(quadID, [0,1,1])
+        #Try deeper
+        chkPts1 = []
+        for i in range(0,10):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([9.1, 9.12])
+            chkPts1.append([9.1, 9.12])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(self.quadT.getTotalPts(), 31)
+        self.assertEqual(self.quadT.getDepth(0), 10)
+        #Now check the bounding quad
+        inShapeVerts = [[7.6, 7.6], [7.6, 9.2], [9.2, 9.2], [9.2, 7.6]]
+        quadID = self.quadT.minBoundingQuad(inShapeVerts, [0])
+        self.assertEqual(quadID, [0,1,1])
+        #Check a very small one
+        inShapeVerts = [[7.6123123, 7.66123123], [7.6123123, 7.67123123], [7.6223123, 7.67123123], [7.6223123, 7.66123123]]
+        quadID = self.quadT.minBoundingQuad(inShapeVerts, [0])
+        self.assertEqual(quadID, [0, 1, 1, 2])
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
