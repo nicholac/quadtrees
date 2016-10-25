@@ -307,7 +307,7 @@ class TestQuadTree2D(unittest.TestCase):
         self.assertEqual(self.quadT.getDepth(0), 2)
         #Now check the bounding quad
         inShapeVerts = [[7.6, 7.6], [7.6, 9.2], [9.2, 9.2], [9.2, 7.6]]
-        quadID = self.quadT.minBoundingQuad(inShapeVerts, [0])
+        quadID = self.quadT.minBoundingQuad(inShapeVerts)
         self.assertEqual(quadID, [0,1,1])
         #Try deeper
         chkPts1 = []
@@ -321,12 +321,45 @@ class TestQuadTree2D(unittest.TestCase):
         self.assertEqual(self.quadT.getDepth(0), 10)
         #Now check the bounding quad
         inShapeVerts = [[7.6, 7.6], [7.6, 9.2], [9.2, 9.2], [9.2, 7.6]]
-        quadID = self.quadT.minBoundingQuad(inShapeVerts, [0])
+        quadID = self.quadT.minBoundingQuad(inShapeVerts)
         self.assertEqual(quadID, [0,1,1])
         #Check a very small one
         inShapeVerts = [[7.6123123, 7.66123123], [7.6123123, 7.67123123], [7.6223123, 7.67123123], [7.6223123, 7.66123123]]
-        quadID = self.quadT.minBoundingQuad(inShapeVerts, [0])
+        quadID = self.quadT.minBoundingQuad(inShapeVerts)
         self.assertEqual(quadID, [0, 1, 1, 2])
+    
+    
+    def test_getPtsByDistance(self):
+        '''
+        Query tree to get points by distance from given point
+        '''
+        tstPt = []
+        chkPts1 = []
+        cnt = 0
+        for i in range(0,10):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([1.1, 1.1])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(cnt, 10)
+        self.assertEqual(self.quadT.getTotalPts(), 10)
+        self.assertEqual(self.quadT.getDepth(0), 0)
+        #Tip it over to next layer
+        chk = self.quadT.insertPt([5.51, 5.51])
+        self.assertEqual(self.quadT.getTotalPts(), 11)
+        
+        #Try getting all top level points
+        tstPt = [6.5, 7.2]
+        tstDist = 2.1
+        closePts = self.quadT.getPtsByDistance(tstPt, tstDist)
+        self.assertEqual(len(closePts), self.quadT.getTotalPts())
+        
+        #Try getting all top level points
+        tstPt = [5.52, 5.52]
+        tstDist = 0.02
+        closePts = self.quadT.getPtsByDistance(tstPt, tstDist)
+        self.assertEqual(closePts, [[5.51, 5.51]])
+    
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']

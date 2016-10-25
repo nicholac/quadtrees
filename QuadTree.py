@@ -191,22 +191,24 @@ class quadTree2D(object):
     
     def getPtsByDistance(self, tstPt, tstDist):
         '''
-        Retrieve points based on distance from given point
+        Retrieve points based on distance from given point - 
+        uses min bounding quad for input pt and dist
         ::param tstPt [x,y]
         ::param dist float dist to search 2d in this space
         :: outPoints results
         '''
-        #Get quads for vertices
-        #Get vertices in range (for quads that contain points)
-        if self.subDivided == False:
-            #Top level - no subdivision
-            for pt in self.points():
-                if self.dist(pt, tstPt) < tstDist:
-                    outPoints.append(pt)
-            return outPoints
-        #There's depth to the tree
-
-        return outPoints
+        #Convert to bounding shape
+        bBox = [[tstPt[0]-tstDist, tstPt[1]-tstDist], 
+                [tstPt[0]-tstDist, tstPt[1]+tstDist],
+                [tstPt[0]+tstDist, tstPt[1]+tstDist],
+                [tstPt[0]+tstDist, tstPt[1]-tstDist]]
+        
+        #Get min bounding quad
+        minQuad = self.minBoundingQuad(bBox)
+        #Get points in this quad
+        outPts = []
+        self.getPtsByQID(minQuad, outPts)
+        return outPts
     
     
     def vertexDist(self, chkPt, chkDist, quadIDs):
@@ -234,11 +236,10 @@ class quadTree2D(object):
         return math.sqrt(math.pow((pt0[0]-pt1[0]), 2.0)+math.pow((pt0[1]-pt1[1]), 2.0))
     
     
-    def minBoundingQuad(self, inShapeVerts, smallestQID):
+    def minBoundingQuad(self, inShapeVerts):
         '''
         Find the smallest quad that bounds the given shape
         ::param inShapeVerts [[x,y], [x,y], ...] Shape vertices
-        ::param smallestQID [0] allows cascade calling - init with [0]
         '''
         #Top level
         if self.containsShape(inShapeVerts) == True:
@@ -246,7 +247,7 @@ class quadTree2D(object):
                 chkContains = []
                 chk = False
                 for child in self.children:
-                    QID = child.minBoundingQuad(inShapeVerts, self.quadID)
+                    QID = child.minBoundingQuad(inShapeVerts)
                     if QID:
                         return QID
                 return self.quadID
