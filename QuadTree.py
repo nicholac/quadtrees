@@ -10,6 +10,7 @@ southeast = 3
 
 from __builtin__ import False
 
+
 class quadTree2D(object):
 
     def __init__(self, centrePt, halfXDim, halfYDim, maxPts, levelID=0):
@@ -29,6 +30,8 @@ class quadTree2D(object):
         self.subDivided = False
         self.levelID = levelID
         self.quadID = [0]
+        #Maximum depth for the tree - to stop recursion when adding many points the same
+        self.maxDepth = 10
      
     def subdivide(self):
         '''Build & populate children
@@ -89,8 +92,12 @@ class quadTree2D(object):
         else:  
             self.points.append(pt)
             if len(self.points) > self.maxPts:
-                self.subdivide()
-                return True
+                if self.levelID < self.maxDepth:
+                    self.subdivide()
+                    return True
+                else:
+                    #Bottomed out - points been added, do nothing
+                    pass
             return True
         return False
         
@@ -128,15 +135,18 @@ class quadTree2D(object):
         ::param outPoints [] to be filled
         '''
         #When we are the given level start aggregating
-        if self.quadID == inQuadID or self.quadID[0:len(inQuadID)] == inQuadID:
-            #0 if its subdivided, everything if its not
-            outPoints.append(self.points)
-            for child in self.children:
-                child.getPtsByQID(inQuadID, outPoints)
+        if inQuadID[0:len(self.quadID)] == self.quadID[0:len(inQuadID)]:
+            #Its in this branch
+            if self.subDivided == False:
+                #Make sure we dont get points for layer above the requested
+                if len(self.quadID)>=len(inQuadID):
+                    for i in self.points:
+                        outPoints.append(i)
+            else:
+                for child in self.children:
+                    child.getPtsByQID(inQuadID, outPoints)
         return outPoints
                 
-            
-    
     
     def getDepth(self, maxLevelID):
         '''
@@ -169,7 +179,8 @@ class quadTree2D(object):
         for child in self.children:
             child.points = []
             del child
-        self.points = []   
+        self.points = []
+        self.children = []   
     
     
         

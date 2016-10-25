@@ -20,7 +20,9 @@ class TestQuadTree2D(unittest.TestCase):
 
 
     def tearDown(self):
-        del self.quadT
+        self.quadT.dumpAllPoints()
+        self.assertEqual(self.quadT.getTotalPts(), 0)
+        self.assertEqual(self.quadT.children, [])
 
 
     def genTestData(self, xDim, yDim, numPts):
@@ -144,9 +146,6 @@ class TestQuadTree2D(unittest.TestCase):
         '''
         Check we are mapping quadIDs properly
         '''
-        self.quadT.dumpAllPoints()
-        self.assertEqual(self.quadT.getTotalPts(), 0)
-        self.assertEqual(self.quadT.children, [])
         tstPt = []
         chkPts1 = []
         cnt = 0
@@ -174,53 +173,78 @@ class TestQuadTree2D(unittest.TestCase):
         for idx1, child in enumerate(self.quadT.children):
             for idx2, child2 in enumerate(child.children):
                 self.assertEqual(child2.quadID, [0, idx1, idx2])
-
-        
         
 
-#     def test_getPtsByQuadID(self):
-#         '''
-#         Get all points at a given QuadID and below (aggregated)
-#         '''
-#         cnt = 0
-#         for i in range(0,10):
-#             #Need to add a bit of noise so the tree bottoms out
-#             chk = self.quadT.insertPt([1.1, 1.1])
-#             if chk == True:
-#                 cnt+=1
-#         self.assertEqual(cnt, 10)
-#         self.assertEqual(self.quadT.getTotalPts(), 10)
-#         self.assertEqual(self.quadT.getDepth(0), 0)
-#         #Tip it over to next layer
-#         chk = self.quadT.insertPt([5.51, 5.51])
-#         if chk == True:
-#             cnt+=1
-#         self.assertEqual(cnt, 11)
-#         self.assertEqual(self.quadT.getTotalPts(), 11)
-#         self.assertEqual(self.quadT.getDepth(0), 1)
-#         #Once more 
-#         for i in range(0,9):
-#             #Need to add a bit of noise so the tree bottoms out
-#             chk = self.quadT.insertPt([5.51, 5.51])
-#             if chk == True:
-#                 cnt+=1
-#         self.assertEqual(cnt, 20)
-#         self.assertEqual(self.quadT.getTotalPts(), 20)
-#         self.assertEqual(self.quadT.getDepth(0), 1)
-#         #Tip it over to next layer
-#         chk = self.quadT.insertPt([7.51, 7.51])
-#         if chk == True:
-#             cnt+=1
-#         self.assertEqual(cnt, 21)
-#         self.assertEqual(self.quadT.getTotalPts(), 21)
-#         self.assertEqual(self.quadT.getDepth(0), 2)
-#         
-#         #Now try and get these points
-#         outPoints = []
-#         self.quadT.getPtsByQID([0,1,1], outPoints)
-#         print 'pts', outPoints
-#         self.assertEqual(outPoints, [[7.51, 7.51]])
+    def test_maxDepth(self):
+        '''
+        Test if the tree bottoms out at max depth without dying
+        '''
+        cnt = 0
+        for i in range(0,11):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([1.1, 1.1])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(cnt, 11)
+        self.assertEqual(self.quadT.getTotalPts(), 11)
+        self.assertEqual(self.quadT.getDepth(0), self.quadT.maxDepth)
+    
+    
+    def test_getPtsbyQuadID(self):
+        '''
+        Retrieve all points under a given quadID
+        '''
+        tstPt = []
+        chkPts1 = []
+        cnt = 0
+        for i in range(0,10):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([1.1, 1.1])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(cnt, 10)
+        self.assertEqual(self.quadT.getTotalPts(), 10)
+        self.assertEqual(self.quadT.getDepth(0), 0)
+        #Tip it over to next layer
+        chk = self.quadT.insertPt([5.51, 5.51])
+        self.assertEqual(self.quadT.getTotalPts(), 11)
         
+        #Now get the points at quadID
+        outPoints = []
+        self.quadT.getPtsByQID([0,1], outPoints)
+        self.assertEqual(outPoints, [[5.51, 5.51]])
+        self.assertEqual(self.quadT.getDepth(0), 1)
+        
+        #Check we dont get points above a small requested QID
+        outPoints = []
+        self.quadT.getPtsByQID([0,1,1,1], outPoints)
+        self.assertEqual(outPoints, [])
+        
+        #Try deeper
+        chkPts1 = []
+        for i in range(0,10):
+            #Need to add a bit of noise so the tree bottoms out
+            chk = self.quadT.insertPt([9.1, 9.12])
+            chkPts1.append([9.1, 9.12])
+            if chk == True:
+                cnt+=1
+        self.assertEqual(self.quadT.getTotalPts(), 21)
+        self.assertEqual(self.quadT.getDepth(0), 2)
+         
+        #Check we can get all the points this way
+        outPoints = []
+        self.quadT.getPtsByQID([0], outPoints)
+        self.assertEqual(len(outPoints), self.quadT.getTotalPts())
+
+        #Check hi-res
+        outPoints = []
+        self.quadT.getPtsByQID([0,1,1], outPoints)
+        self.assertEqual(outPoints, chkPts1)
+        
+        #Check hi-res
+        outPoints = []
+        self.quadT.getPtsByQID([0,1,2], outPoints)
+        self.assertEqual(outPoints, [[5.51, 5.51]])
 
 
 if __name__ == "__main__":
