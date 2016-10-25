@@ -5,13 +5,21 @@ northwest = 0
 northeast = 1
 southwest = 2
 southeast = 3
+
 '''
 
 from __builtin__ import False
 
 class quadTree2D(object):
 
-    def __init__(self, centrePt, halfXDim, halfYDim, maxPts, levelID):
+    def __init__(self, centrePt, halfXDim, halfYDim, maxPts, levelID=0):
+        '''
+        ::param centrePt [float x, float y] for this Quad (pass total area centre point on tree init)
+        ::param halfXDim float half X dimension of quad (pass half total X dim on tree init)
+        ::param halfYDim float half Y dimension of quad (pass half total Y dim on tree init)
+        ::param maxPts int Maximum number of points per quad before split (controls depth)
+        ::param leveID tree depth at this level (pass 0 on tree init)
+        '''
         self.maxPts = maxPts
         self.children = []
         self.centrePt = centrePt
@@ -20,7 +28,6 @@ class quadTree2D(object):
         self.points = []
         self.subDivided = False
         self.levelID = levelID
-        #print self.levelID, self.centrePt
      
     def subdivide(self):
         '''Build & populate children
