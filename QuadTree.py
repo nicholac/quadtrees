@@ -28,21 +28,30 @@ class quadTree2D(object):
         self.points = []
         self.subDivided = False
         self.levelID = levelID
+        self.quadID = [0]
      
     def subdivide(self):
         '''Build & populate children
         '''
         childACentre = [self.centrePt[0]-(0.5*self.halfXDim), self.centrePt[1]+(0.5*self.halfYDim)]
         childA = quadTree2D(childACentre, self.halfXDim/2.0, self.halfYDim/2.0, self.maxPts, self.levelID+1)
+        childA.quadID = self.quadID[:]
+        childA.quadID.append(0)
         
         childBCentre = [self.centrePt[0]+(0.5*self.halfXDim), self.centrePt[1]+(0.5*self.halfYDim)]
         childB = quadTree2D(childBCentre, self.halfXDim/2.0, self.halfYDim/2.0, self.maxPts, self.levelID+1)
+        childB.quadID = self.quadID[:]
+        childB.quadID.append(1)
         
         childCCentre = [self.centrePt[0]-(0.5*self.halfXDim), self.centrePt[1]-(0.5*self.halfYDim)]
         childC = quadTree2D(childCCentre, self.halfXDim/2.0, self.halfYDim/2.0, self.maxPts, self.levelID+1)
+        childC.quadID = self.quadID[:]
+        childC.quadID.append(2)
         
         childDCentre = [self.centrePt[0]+(0.5*self.halfXDim), self.centrePt[1]-(0.5*self.halfYDim)]
         childD = quadTree2D(childDCentre, self.halfXDim/2.0, self.halfYDim/2.0, self.maxPts, self.levelID+1)
+        childD.quadID = self.quadID[:]
+        childD.quadID.append(3)
         
         self.children = [childA, childB, childC, childD]
         self.subDivided = True
@@ -61,6 +70,7 @@ class quadTree2D(object):
         else:
             print 'Sub div failed'
         self.points = []
+            
         
         
     def insertPt(self, pt):
@@ -94,9 +104,10 @@ class quadTree2D(object):
                 return True
         return False
     
-    def getPointsAtQuad(self, pt):
+    def getPtsByPt(self, pt):
         '''
-        Drill down through the tree - recover the points at the leaf of given point
+        Retrieve the points at the leaf containing the given point
+        ::param pt [float x, float y]
         '''
         if self.chkBounds(pt) == False:
             print 'Pt not in tree bounds'
@@ -105,8 +116,26 @@ class quadTree2D(object):
             return self.points
         for child in self.children:
             if child.chkBounds(pt) == True:
-                outPts = child.getPointsAtQuad(pt)
+                outPts = child.getPtsByPt(pt)
         return outPts
+    
+    
+    def getPtsByQID(self, inQuadID, outPoints):
+        '''
+        Retrieve the points stored at a specific quadID
+        Aggregates points at lower levels
+        ::param quadID [0,1,2,3,2,1,2]
+        ::param outPoints [] to be filled
+        '''
+        #When we are the given level start aggregating
+        if self.quadID == inQuadID or self.quadID[0:len(inQuadID)] == inQuadID:
+            #0 if its subdivided, everything if its not
+            outPoints.append(self.points)
+            for child in self.children:
+                child.getPtsByQID(inQuadID, outPoints)
+        return outPoints
+                
+            
     
     
     def getDepth(self, maxLevelID):
@@ -132,6 +161,7 @@ class quadTree2D(object):
             cnt+=child.getTotalPts()
         return cnt
 
+
     def dumpAllPoints(self):
         '''
         Clean the tree of all points
@@ -141,7 +171,7 @@ class quadTree2D(object):
             del child
         self.points = []   
     
-
     
+        
     
         
